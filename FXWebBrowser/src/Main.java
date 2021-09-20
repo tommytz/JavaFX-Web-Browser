@@ -17,26 +17,31 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 public class Main extends Application {
+	private WebView webView = new WebView();
+	private WebEngine webEngine = webView.getEngine();
+
 	private TextField urlField;
-	private WebView webView;
-	
-	// Regex pattern to match on valid url
+
+	// Regular expression pattern to match on valid url
 	private Pattern domainPattern = Pattern.compile(
-			"[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)",
+			"[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)",
 			Pattern.CASE_INSENSITIVE);
-	
+	private Matcher domainMatcher;
+
 	private EventHandler<ActionEvent> loadURLHandler = new EventHandler<ActionEvent>() {
 
 		@Override
 		public void handle(ActionEvent arg0) {
-			// TODO Auto-generated method stub
-			loadURL(urlField.getText());
+			// Check if user input matches a valid typed URL
+			String urlInput = urlField.getText();
+			domainMatcher = domainPattern.matcher(urlInput);
 
-//			Matcher m = domainPattern.matcher((urlField.getText()));
-			// Matcher domainMatcher = domainPattern.matcher(urlField.getText());
-			// System.out.println(m.group(0));
-//			System.out.println(m.matches());
-			// www.
+			if (domainMatcher.matches()) {
+				loadURL(urlInput);
+			} else {
+				// If not, then run it through a search engine
+				searchEngineLookup(urlInput);
+			}
 		}
 	};
 
@@ -45,14 +50,15 @@ public class Main extends Application {
 	}
 
 	public void loadURL(String url) {
-		String inputURL = toURL(url);
-		if (inputURL == null) {
-			inputURL = toURL("https://" + url);
-//			System.out.printf("Input missing \"https://\", replaced with: https://%s%n", url);
+		String urlInput = toURL(url);
+		// Turns a valid typed URL into one that can be loaded by adding https:// to it
+		if (urlInput == null) {
+			urlInput = toURL("https://" + url);
 		}
 		// Code to do something on page load failing
-		/*WebEngine webEngine = webView.getEngine();
-
+		/*
+		 * NEED TO ASK WHY THIS CODE IS RUNNING MULTIPLE TIMES IF YOU TRY A FAIL MORE THAN ONCE
+		 */
 		webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<State>() {
 			public void changed(ObservableValue ov, State oldState, State newState) {
 				if (newState == State.FAILED) {
@@ -60,19 +66,16 @@ public class Main extends Application {
 				}
 			}
 		});
-		webEngine.load(inputURL);*/
-		webView.getEngine().load(inputURL);
+		webEngine.load(urlInput);
 	}
 
 	// To use later with any url not containing a top level domain
-	public void searchInput(String string) {
+	public void searchEngineLookup(String string) {
 		webView.getEngine().load(String.format("https://www.google.com/search?q=%s", string));
 	}
 
-	/*
-	 * Checks if string input is a valid URL. Returns the string if valid, otherwise
-	 * returns null.
-	 */
+	// Checks if string input is a valid URL. Returns the string if valid, otherwise
+	// returns null.
 	private String toURL(String string) {
 		try {
 			return new URL(string).toExternalForm();
@@ -90,9 +93,6 @@ public class Main extends Application {
 		HBox hBox = new HBox();
 		hBox.getChildren().addAll(launchBtn, urlField);
 
-		webView = new WebView();
-		webView.getEngine().load("http://www.google.com");
-
 		// Set handlers for loading URL from text field
 		launchBtn.setOnAction(loadURLHandler);
 		urlField.setOnAction(loadURLHandler);
@@ -102,6 +102,9 @@ public class Main extends Application {
 
 		VBox.setVgrow(webView, Priority.ALWAYS);
 		HBox.setHgrow(urlField, Priority.ALWAYS);
+		
+		// Load home page (make this a proper method later)
+		webEngine.load("http://www.google.com");
 
 		primaryStage.setScene(new Scene(root));
 		primaryStage.sizeToScene();
