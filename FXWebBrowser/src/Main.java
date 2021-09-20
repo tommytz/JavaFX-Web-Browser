@@ -24,7 +24,7 @@ public class Main extends Application {
 
 	// Regular expression pattern to match on valid URL with top level domain
 	private Pattern domainPattern = Pattern.compile(
-			"[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)",
+			"https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?",
 			Pattern.CASE_INSENSITIVE);
 	private Matcher domainMatcher;
 
@@ -35,7 +35,7 @@ public class Main extends Application {
 			String urlInput = urlField.getText();
 			domainMatcher = domainPattern.matcher(urlInput);
 
-			if (domainMatcher.matches()) {
+			if (domainMatcher.matches() || (toURL("https://" + urlInput) != null)) { // Accounts for URL using both http/https and URL not using it
 				loadURL(urlInput);
 			} else {
 				// If not, then run it through a search engine
@@ -45,27 +45,20 @@ public class Main extends Application {
 	};
 	
 	// Code to do something on page load failing or succeeding
-			/*
-			 * NEED TO ASK WHY THIS CODE IS RUNNING MULTIPLE TIMES IF YOU TRY A FAIL MORE
-			 * THAN ONCE
-			 */
 	private ChangeListener<State> loadListener = new ChangeListener<State>() {
 		public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
 			if (newState == State.FAILED) {
 				// TO DO: Make some kind of page for failing to load message
-				System.out.println("Failed.");
+				System.out.println("Failed to load website.");
 			}
 			if (newState == State.SUCCEEDED) {
 				// Updates text field and window title on page load
 				urlField.setText(engine.getLocation());
 				primaryStage.setTitle(engine.getTitle());
+				System.out.println("Succesfully loaded " + engine.getLocation());
 			}
 		}
 	};
-
-	public Main() {
-		// TODO Auto-generated constructor stub
-	}
 
 	// Makes the website load!
 	public void loadURL(String url) {
@@ -75,7 +68,6 @@ public class Main extends Application {
 			urlInput = toURL("https://" + url);
 		}		
 		engine.load(urlInput);
-		primaryStage.setTitle(engine.getTitle());
 
 	}
 
@@ -86,8 +78,7 @@ public class Main extends Application {
 	}
 
 	// Checks if string input is a valid URL. Returns the string if valid, otherwise
-	// returns null. This mostly is checking for "https://" at the start since the
-	// regular expression should take anything that's completely invalid.
+	// returns null. This mostly is checking for "https://" at the start.
 	private String toURL(String string) {
 		try {
 			return new URL(string).toExternalForm();
@@ -135,6 +126,10 @@ public class Main extends Application {
 	public static void main(String[] args) {
 		launch();
 
+	}
+	
+	public Main() {
+		// TODO Auto-generated constructor stub
 	}
 
 }
