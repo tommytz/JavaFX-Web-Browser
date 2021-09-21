@@ -29,9 +29,6 @@ public class Controller {
 	public Controller(Tab firstTab) {
 		this.webView = (WebView) firstTab.getContent();
 		storeNewTab(firstTab);
-		webView.getEngine().getLoadWorker().stateProperty().addListener(loadListener);
-		
-		webView.getEngine().load(Browser.homePage);
 	}
 	
 	// Code to change WebEngine whenever we change tab
@@ -41,7 +38,11 @@ public class Controller {
 	}
 	
 	public void storeNewTab(Tab tab) {
-		allTabs.put(tab, (WebView) tab.getContent());
+		WebView newWebView = (WebView) tab.getContent();
+		allTabs.put(tab, newWebView);
+		newWebView.getEngine().getLoadWorker().stateProperty().addListener(loadListener);
+		newWebView.getEngine().load(Browser.homePage);
+		
 	}
 	
 	// Makes the URL address load! Works with the engine.
