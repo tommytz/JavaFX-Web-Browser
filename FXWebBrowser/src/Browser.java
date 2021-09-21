@@ -11,34 +11,37 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.web.*;
 import javafx.stage.Stage;
 
 public class Browser extends Application {
 	private Controller control;
 	private Stage primaryStage;
 	private final TabPane tabPane = new TabPane();
-	private Tab currentTab;
 
 	private TextField addressBar = new TextField();
 	public static String homePage = "http://www.google.com";
 
 	// Regular expression pattern to match on valid URL with top level domain
-	private Pattern domainPattern = Pattern.compile(
+	private Pattern httpsPattern = Pattern.compile(
 			"https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?",
 			Pattern.CASE_INSENSITIVE);
-	private Matcher domainMatcher;
+	private Pattern noSchemePattern = Pattern.compile(
+			"[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?",
+			Pattern.CASE_INSENSITIVE);
+	private Matcher httpsMatcher;
+	private Matcher noSchemeMatcher;
 
 	// Event handler for loading a URL from user input, works with the buttons
 	private EventHandler<ActionEvent> urlLoadingHandler = new EventHandler<ActionEvent>() {
 		public void handle(ActionEvent arg0) {
 			// Check if user input matches a valid typed URL
 			String address = addressBar.getText();
-			domainMatcher = domainPattern.matcher(address);
+			httpsMatcher = httpsPattern.matcher(address);
+			noSchemeMatcher = noSchemePattern.matcher(address);
 
-			if (domainMatcher.matches()) {
+			if (httpsMatcher.matches()) {
 				control.loadURL(address);
-			} else if (toURL("https://" + address) != null) {
+			} else if (noSchemeMatcher.matches()) {
 				control.loadURL(toURL("https://" + address));
 			} else {
 				// If not, then run it through a search engine
@@ -110,10 +113,10 @@ public class Browser extends Application {
 		Button newTab = new Button("+");
 		tabBar.getChildren().addAll(tabPane, newTab);
 
-		Tab firstTab = new Tab("Home", new WebView());
-		currentTab = firstTab;
+		BrowserTab firstBrowserTab = new BrowserTab(homePage);
+		Tab firstTab = new Tab("New Tab", firstBrowserTab.getWebView());
 		tabPane.getTabs().add(firstTab);
-		control = new Controller(firstTab);
+		control = new Controller(firstTab, firstBrowserTab);
 
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
 
@@ -121,9 +124,11 @@ public class Browser extends Application {
 
 			@Override
 			public void handle(ActionEvent arg0) {
-				Tab newTab = new Tab("New", new WebView());
-				control.storeNewTab(newTab);
+				BrowserTab newBrowserTab = new BrowserTab(homePage);
+				Tab newTab = new Tab("New Tab", newBrowserTab.getWebView());
+				control.storeNewTab(newTab, newBrowserTab);
 				tabPane.getTabs().add(newTab);
+				tabPane.getSelectionModel().select(newTab);
 			}
 		});
 
