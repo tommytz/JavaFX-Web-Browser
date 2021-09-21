@@ -5,43 +5,58 @@ import java.util.regex.Pattern;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker.State;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.TabPane.TabDragPolicy;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 public class Browser extends Application {
-	private Controller control;
+	// TO DO:
+	// change new tab button to be part of the tabpane and dynamically stay on the right
+	// Site couldn't be reached error pane
+	// history tab and bookmarks bar
+	// Settings: Change homescreen, color, zoom level
+	// Progress bar for page loading
+	// Add symbols for buttons
+	// Context menu on right click
+	// Print, html source
+	
+	
 	private Stage primaryStage;
+	private Scene scene;
+	private Controller control;
+	private final TextField addressBar = new TextField();
 	private final TabPane tabPane = new TabPane();
+	public String homePage = "http://www.google.com";
+	
+	private final HBox navigationBar = new HBox();
+	private final HBox tabBar = new HBox(); // To be removed when new tab button is in tab pane
 
-	private TextField addressBar = new TextField();
-	public static String homePage = "http://www.google.com";
-
-	// Regular expression pattern to match on valid URL with top level domain
-	private Pattern httpsPattern = Pattern.compile(
+	// Regular expression patterns to match on valid URL with top level domain
+	private final Pattern httpsPattern = Pattern.compile(
 			"https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?",
 			Pattern.CASE_INSENSITIVE);
-	private Pattern noSchemePattern = Pattern.compile(
+	private final Pattern noHttpsPattern = Pattern.compile(
 			"[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?",
 			Pattern.CASE_INSENSITIVE);
 	private Matcher httpsMatcher;
-	private Matcher noSchemeMatcher;
+	private Matcher noHttpsMatcher;
 
-	// Event handler for loading a URL from user input, works with the buttons
 	private EventHandler<ActionEvent> urlLoadingHandler = new EventHandler<ActionEvent>() {
 		public void handle(ActionEvent arg0) {
 			// Check if user input matches a valid typed URL
 			String address = addressBar.getText();
 			httpsMatcher = httpsPattern.matcher(address);
-			noSchemeMatcher = noSchemePattern.matcher(address);
+			noHttpsMatcher = noHttpsPattern.matcher(address);
 
 			if (httpsMatcher.matches()) {
 				control.loadURL(address);
-			} else if (noSchemeMatcher.matches()) {
+			} else if (noHttpsMatcher.matches()) {
 				control.loadURL(toURL("https://" + address));
 			} else {
 				// If not, then run it through a search engine
@@ -50,18 +65,27 @@ public class Browser extends Application {
 		}
 	};
 
-	// Listener to change the engine when we change tab focus
+	private EventHandler<ActionEvent> newTabHandler = new EventHandler<ActionEvent>() {
+		@Override
+		public void handle(ActionEvent arg0) {
+			addNewTab(homePage);
+		}
+	};
+
+	// Listener to change the engine when we select a tab
 	private ChangeListener<Tab> tabChangeListener = new ChangeListener<Tab>() {
 		@Override
 		public void changed(ObservableValue<? extends Tab> ov, Tab oldTab, Tab newTab) {
 			System.out.println("Tab Selection changed");
 			control.onTabChange(newTab);
+			// If the page has loaded then we can dynamically change the window title and address bar
+			if (control.getWebEngine().getLoadWorker().getState() == State.SUCCEEDED) {
+				primaryStage.setTitle(control.getWebEngine().getTitle());
+				addressBar.setText(control.getWebEngine().getLocation());
+			}
 		}
 	};
 
-	// Checks if string input is a valid URL. Returns the string if valid, otherwise
-	// returns null. This mostly is checking for "https://" at the start. Works with
-	// user input.
 	private String toURL(String string) {
 		try {
 			return new URL(string).toExternalForm();
@@ -70,7 +94,6 @@ public class Browser extends Application {
 		}
 	}
 
-	// These buttons should instead invoke controller methods
 	private void setupNavigationButtons(Button back, Button forward, Button reload, Button home) {
 		back.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 			public void handle(MouseEvent arg0) {
@@ -94,6 +117,26 @@ public class Browser extends Application {
 		});
 	}
 
+	private void addNewTab(String url) {
+		Tab newTab = new Tab("New Tab");
+		BrowserTab newBrowserTab = new BrowserTab(url, newTab, this);
+		control.storeNewTab(newTab, newBrowserTab);
+		tabPane.getTabs().add(newTab);
+		tabPane.getSelectionModel().select(newTab);
+	}
+
+	public void setWindowTitle(String string) {
+		primaryStage.setTitle(string);
+	}
+
+	public void setAddressBar(String string) {
+		addressBar.setText(string);
+	}
+
+	public BrowserTab getControlFocusTab() {
+		return control.getFocusTab();
+	}
+
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		// TODO Auto-generated method stub
@@ -105,51 +148,39 @@ public class Browser extends Application {
 		Button home = new Button("home");
 		Button launch = new Button("launch");
 		setupNavigationButtons(back, forward, reload, home);
-
-		HBox navigationBar = new HBox();
 		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, launch);
 
-		HBox tabBar = new HBox();
-		Button newTab = new Button("+");
-		tabBar.getChildren().addAll(tabPane, newTab);
-
-		BrowserTab firstBrowserTab = new BrowserTab(homePage);
-		Tab firstTab = new Tab("New Tab", firstBrowserTab.getWebView());
-		tabPane.getTabs().add(firstTab);
-		control = new Controller(firstTab, firstBrowserTab);
-
+		Button newTab = new Button("+"); // This button is what is causing the distortion of the vbox on the right
+		newTab.setOnAction(newTabHandler);
+		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
-
-		newTab.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent arg0) {
-				BrowserTab newBrowserTab = new BrowserTab(homePage);
-				Tab newTab = new Tab("New Tab", newBrowserTab.getWebView());
-				control.storeNewTab(newTab, newBrowserTab);
-				tabPane.getTabs().add(newTab);
-				tabPane.getSelectionModel().select(newTab);
-			}
-		});
-
+		tabBar.getChildren().addAll(tabPane, newTab);
+		
 		// Set handlers for loading URL from text field
 		launch.setOnAction(urlLoadingHandler);
 		addressBar.setOnAction(urlLoadingHandler);
+		
+		// Setup default tab on open and instantiate controller
+		Tab firstTab = new Tab("New Tab");
+		BrowserTab firstBrowserTab = new BrowserTab(homePage, firstTab, this);
+		tabPane.getTabs().add(firstTab);
+		control = new Controller(firstTab, firstBrowserTab);
 
 		VBox root = new VBox();
-		root.getChildren().addAll(navigationBar, tabBar);
+		root.getChildren().addAll(navigationBar, tabBar); // Will change tabBar to tabPane
 
-		VBox.setVgrow(tabPane, Priority.ALWAYS);
+		VBox.setVgrow(tabBar, Priority.ALWAYS);
 		HBox.setHgrow(addressBar, Priority.ALWAYS);
+		HBox.setHgrow(tabPane, Priority.ALWAYS);
 
-		primaryStage.setScene(new Scene(root));
+		scene = new Scene(root);
+		primaryStage.setScene(scene);
 		primaryStage.sizeToScene();
 		primaryStage.show();
 	}
 
 	public static void main(String[] args) {
 		launch();
-
 	}
 
 	public Browser() {

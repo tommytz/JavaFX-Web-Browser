@@ -1,14 +1,15 @@
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker.State;
+import javafx.scene.control.Tab;
 import javafx.scene.web.*;
 
-// Moved the code that deals with listening to the engine to here.
 public class BrowserTab {
-	private WebView webView = new WebView();
-	private WebEngine engine = webView.getEngine();
-	
-	// Code to do something on page load failing or succeeding. Works with the engine.
+	private Tab tab;
+	private Browser browser;
+	private final WebView webView = new WebView();
+	private final WebEngine engine = webView.getEngine();
+
 	private ChangeListener<State> loadListener = new ChangeListener<State>() {
 		public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
 			if (newState == State.FAILED) {
@@ -16,15 +17,20 @@ public class BrowserTab {
 				System.out.println("Failed to load website.");
 			}
 			if (newState == State.SUCCEEDED) {
-				// Updates text field and window title on page load
-//				urlField.setText(engine.getLocation());
-//				primaryStage.setTitle(engine.getTitle());
+				tab.setText(engine.getTitle());
+				if (browser.getControlFocusTab().equals(BrowserTab.this)) {
+					browser.setAddressBar(engine.getLocation());
+					browser.setWindowTitle(engine.getTitle());
+				}
 				System.out.println("Succesfully loaded " + engine.getLocation());
 			}
 		}
 	};
 
-	public BrowserTab(String url) {
+	public BrowserTab(String url, Tab tab, Browser browser) {
+		this.tab = tab;
+		this.browser = browser;
+		tab.setContent(webView);
 		engine.getLoadWorker().stateProperty().addListener(loadListener);
 		engine.load(url);
 	}
