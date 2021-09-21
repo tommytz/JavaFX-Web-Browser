@@ -10,17 +10,20 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.web.*;
 import javafx.stage.Stage;
 
 public class Main extends Application {
 	private Stage primaryStage;
+	TabPane tabPane = new TabPane();
 	private WebView browser = new WebView();
 	private WebEngine engine = browser.getEngine();
-	private WebHistory history; // To be used later in going forwards and backwards + browsing history
+	private WebHistory history = engine.getHistory();
 
 	private TextField urlField;
+	private String homepage = "http://www.google.com";
 
 	// Regular expression pattern to match on valid URL with top level domain
 	private Pattern domainPattern = Pattern.compile(
@@ -86,6 +89,33 @@ public class Main extends Application {
 			return null;
 		}
 	}
+	
+	private void setupNavigationButtons(Button back, Button forward, Button reload, Button home) {
+		back.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent arg0) {
+				try{
+					history.go(-1);
+				} catch(IndexOutOfBoundsException e){
+					System.out.println("First page in history, can't go back further");
+				}
+			}});
+		forward.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent arg0) {
+				try{
+					history.go(1);
+				} catch(IndexOutOfBoundsException e){
+					System.out.println("Latest page in history, can't go forwards");
+				}
+			}});
+		reload.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent arg0) {
+				engine.reload();
+			}});
+		home.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent arg0) {
+				engine.load(homepage);
+			}});
+	}
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -98,16 +128,21 @@ public class Main extends Application {
 		Button home = new Button("home");
 		urlField = new TextField();
 		Button launch = new Button("launch");
-
+		setupNavigationButtons(back, forward, reload, home);
+		
 		HBox navigationBar = new HBox();
 		navigationBar.getChildren().addAll(back, forward, reload, home, urlField, launch);
+		
+		HBox tabBar = new HBox();
+		Button newTab = new Button("+");
+		tabBar.getChildren().addAll(tabPane, newTab);
 
 		// Set handlers for loading URL from text field
 		launch.setOnAction(loadURLHandler);
 		urlField.setOnAction(loadURLHandler);
 
 		VBox root = new VBox();
-		root.getChildren().addAll(navigationBar, browser);
+		root.getChildren().addAll(navigationBar, tabBar, browser);
 
 		VBox.setVgrow(browser, Priority.ALWAYS);
 		HBox.setHgrow(urlField, Priority.ALWAYS);
@@ -116,7 +151,7 @@ public class Main extends Application {
 		engine.getLoadWorker().stateProperty().addListener(loadListener);
 
 		// Load home page (make this a proper method later)
-		engine.load("http://www.google.com");
+		engine.load(homepage);
 
 		primaryStage.setScene(new Scene(root));
 		primaryStage.sizeToScene();
