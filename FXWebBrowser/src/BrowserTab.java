@@ -18,7 +18,7 @@ public class BrowserTab {
 			}
 			if (newState == State.SUCCEEDED) {
 				tab.setText(engine.getTitle());
-				if (browser.getControlFocusTab().equals(BrowserTab.this)) {
+				if (browser.getControlSelectTab().equals(BrowserTab.this)) {
 					browser.setAddressBar(engine.getLocation());
 					browser.setWindowTitle(engine.getTitle());
 				}

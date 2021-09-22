@@ -17,23 +17,35 @@ import javafx.stage.Stage;
 
 public class Browser extends Application {
 	// TO DO:
-	// change new tab button to be part of the tabpane and dynamically stay on the right
+	// change new tab button to be part of the tabpane and dynamically stay on the
+	// right
+	// Method to get rid of BrowserTabs when a tab is closed (to stop them
+	// persisting)
+	// Method to save history object from closed tab to use in browsing history
 	// Site couldn't be reached error pane
 	// history tab and bookmarks bar
 	// Settings: Change homescreen, color, zoom level
 	// Progress bar for page loading
 	// Add symbols for buttons
 	// Context menu on right click
+	// Add shadow to buttons on hover
+	// new tab on CTRL+T and history on CTRL+H
 	// Print, html source
-	
-	
+
 	private Stage primaryStage;
 	private Scene scene;
 	private Controller control;
 	private final TextField addressBar = new TextField();
 	private final TabPane tabPane = new TabPane();
 	public String homePage = "http://www.google.com";
-	
+
+	private Button back = new Button("back");
+	private Button forward = new Button("forward");
+	private Button reload = new Button("reload");
+	private Button home = new Button("home");
+	private Button launch = new Button("launch");
+	Tab addTab = new Tab("+");
+
 	private final HBox navigationBar = new HBox();
 	private final HBox tabBar = new HBox(); // To be removed when new tab button is in tab pane
 
@@ -65,23 +77,29 @@ public class Browser extends Application {
 		}
 	};
 
-	private EventHandler<ActionEvent> newTabHandler = new EventHandler<ActionEvent>() {
-		@Override
-		public void handle(ActionEvent arg0) {
-			addNewTab(homePage);
-		}
-	};
-
 	// Listener to change the engine when we select a tab
 	private ChangeListener<Tab> tabChangeListener = new ChangeListener<Tab>() {
 		@Override
 		public void changed(ObservableValue<? extends Tab> ov, Tab oldTab, Tab newTab) {
-			System.out.println("Tab Selection changed");
-			control.onTabChange(newTab);
-			// If the page has loaded then we can dynamically change the window title and address bar
-			if (control.getWebEngine().getLoadWorker().getState() == State.SUCCEEDED) {
-				primaryStage.setTitle(control.getWebEngine().getTitle());
-				addressBar.setText(control.getWebEngine().getLocation());
+			if (control != null) {
+				// Clicking the add new tab button
+				if (newTab == addTab) {
+					tabPane.getSelectionModel().select(tabPane.getTabs().size() - 2);
+					Tab createdTab = createNewTab(homePage);
+					tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab);
+					tabPane.getSelectionModel().select(createdTab);
+					
+				// On any other tab being selected
+				} else if (newTab != addTab) {
+					System.out.println("Tab Selection changed");
+					control.onTabChange(newTab);
+					// If the page has loaded then we can dynamically change the window title and
+					// address bar
+					if (control.getWebEngine().getLoadWorker().getState() == State.SUCCEEDED) {
+						primaryStage.setTitle(control.getWebEngine().getTitle());
+						addressBar.setText(control.getWebEngine().getLocation());
+					}
+				}
 			}
 		}
 	};
@@ -94,7 +112,7 @@ public class Browser extends Application {
 		}
 	}
 
-	private void setupNavigationButtons(Button back, Button forward, Button reload, Button home) {
+	private void setupNavigationButtons() {
 		back.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 			public void handle(MouseEvent arg0) {
 				control.goBack();
@@ -117,12 +135,11 @@ public class Browser extends Application {
 		});
 	}
 
-	private void addNewTab(String url) {
+	private Tab createNewTab(String url) {
 		Tab newTab = new Tab("New Tab");
 		BrowserTab newBrowserTab = new BrowserTab(url, newTab, this);
 		control.storeNewTab(newTab, newBrowserTab);
-		tabPane.getTabs().add(newTab);
-		tabPane.getSelectionModel().select(newTab);
+		return newTab;
 	}
 
 	public void setWindowTitle(String string) {
@@ -133,8 +150,8 @@ public class Browser extends Application {
 		addressBar.setText(string);
 	}
 
-	public BrowserTab getControlFocusTab() {
-		return control.getFocusTab();
+	public BrowserTab getControlSelectTab() {
+		return control.getSelectTab();
 	}
 
 	@Override
@@ -142,36 +159,28 @@ public class Browser extends Application {
 		// TODO Auto-generated method stub
 		this.primaryStage = primaryStage;
 
-		Button back = new Button("back");
-		Button forward = new Button("forward");
-		Button reload = new Button("reload");
-		Button home = new Button("home");
-		Button launch = new Button("launch");
-		setupNavigationButtons(back, forward, reload, home);
+		setupNavigationButtons();
 		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, launch);
 
-		Button newTab = new Button("+"); // This button is what is causing the distortion of the vbox on the right
-		newTab.setOnAction(newTabHandler);
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
-		tabBar.getChildren().addAll(tabPane, newTab);
-		
+
 		// Set handlers for loading URL from text field
 		launch.setOnAction(urlLoadingHandler);
 		addressBar.setOnAction(urlLoadingHandler);
-		
+
 		// Setup default tab on open and instantiate controller
+		addTab.setClosable(false);
 		Tab firstTab = new Tab("New Tab");
 		BrowserTab firstBrowserTab = new BrowserTab(homePage, firstTab, this);
-		tabPane.getTabs().add(firstTab);
+		tabPane.getTabs().addAll(firstTab, addTab);
 		control = new Controller(firstTab, firstBrowserTab);
 
 		VBox root = new VBox();
-		root.getChildren().addAll(navigationBar, tabBar); // Will change tabBar to tabPane
+		root.getChildren().addAll(navigationBar, tabPane);
 
-		VBox.setVgrow(tabBar, Priority.ALWAYS);
+		VBox.setVgrow(tabPane, Priority.ALWAYS);
 		HBox.setHgrow(addressBar, Priority.ALWAYS);
-		HBox.setHgrow(tabPane, Priority.ALWAYS);
 
 		scene = new Scene(root);
 		primaryStage.setScene(scene);
