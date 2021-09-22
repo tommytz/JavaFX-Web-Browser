@@ -1,3 +1,5 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -11,21 +13,20 @@ import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.TabPane.TabDragPolicy;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 public class Browser extends Application {
 	// TO DO:
-	// change new tab button to be part of the tabpane and dynamically stay on the
-	// right
 	// Method to get rid of BrowserTabs when a tab is closed (to stop them
 	// persisting)
 	// Method to save history object from closed tab to use in browsing history
 	// Site couldn't be reached error pane
 	// history tab and bookmarks bar
 	// Settings: Change homescreen, color, zoom level
-	// Progress bar for page loading
 	// Add symbols for buttons
 	// Context menu on right click
 	// Add shadow to buttons on hover
@@ -35,19 +36,22 @@ public class Browser extends Application {
 	private Stage primaryStage;
 	private Scene scene;
 	private Controller control;
+	private final HBox navigationBar = new HBox();
 	private final TextField addressBar = new TextField();
 	private final TabPane tabPane = new TabPane();
 	public String homePage = "http://www.google.com";
 
-	private Button back = new Button("back");
-	private Button forward = new Button("forward");
-	private Button reload = new Button("reload");
-	private Button home = new Button("home");
-	private Button launch = new Button("launch");
-	Tab addTab = new Tab("+");
-
-	private final HBox navigationBar = new HBox();
-	private final HBox tabBar = new HBox(); // To be removed when new tab button is in tab pane
+	private final Button back = new Button();
+	private final Button forward = new Button();
+	private final Button reload = new Button();
+	private final Button home = new Button();
+	private final Button load = new Button("Go");
+	private final Tab addTab = new Tab("+");
+	
+	private ImageView backIcon;
+	private ImageView forwardIcon;
+	private ImageView reloadIcon;
+	private ImageView homeIcon;
 
 	// Regular expression patterns to match on valid URL with top level domain
 	private final Pattern httpsPattern = Pattern.compile(
@@ -59,7 +63,7 @@ public class Browser extends Application {
 	private Matcher httpsMatcher;
 	private Matcher noHttpsMatcher;
 
-	private EventHandler<ActionEvent> urlLoadingHandler = new EventHandler<ActionEvent>() {
+	private final EventHandler<ActionEvent> urlLoadingHandler = new EventHandler<ActionEvent>() {
 		public void handle(ActionEvent arg0) {
 			// Check if user input matches a valid typed URL
 			String address = addressBar.getText();
@@ -78,22 +82,20 @@ public class Browser extends Application {
 	};
 
 	// Listener to change the engine when we select a tab
-	private ChangeListener<Tab> tabChangeListener = new ChangeListener<Tab>() {
-		@Override
+	private final ChangeListener<Tab> tabChangeListener = new ChangeListener<Tab>() {
 		public void changed(ObservableValue<? extends Tab> ov, Tab oldTab, Tab newTab) {
 			if (control != null) {
 				// Clicking the add new tab button
 				if (newTab == addTab) {
 					Tab createdTab = createNewTab(homePage);
-					tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab);
+					tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab); // Add to list one position before
 					tabPane.getSelectionModel().select(createdTab);
-					
-				// On any other tab being selected
+
+					// On any other tab being selected
 				} else if (newTab != addTab) {
 					System.out.println("Tab Selection changed to " + newTab.getText());
 					control.onTabChange(newTab);
-					// If the page has loaded then we can dynamically change the window title and
-					// address bar
+					// If page has loaded we can dynamically change window title and address bar
 					if (control.getWebEngine().getLoadWorker().getState() == State.SUCCEEDED) {
 						primaryStage.setTitle(control.getWebEngine().getTitle());
 						addressBar.setText(control.getWebEngine().getLocation());
@@ -133,6 +135,31 @@ public class Browser extends Application {
 			}
 		});
 	}
+	
+	private void importButtonIcons() {
+		try {
+			backIcon = new ImageView(new Image(new FileInputStream("resources/icons8-back-50.png")));
+			forwardIcon = new ImageView(new Image(new FileInputStream("resources/icons8-forward-50.png")));
+			reloadIcon = new ImageView(new Image(new FileInputStream("resources/icons8-restart-50.png")));
+			homeIcon = new ImageView(new Image(new FileInputStream("resources/icons8-home-50.png")));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		backIcon.setFitHeight(15);
+		forwardIcon.setFitHeight(15);
+		reloadIcon.setFitHeight(15);
+		homeIcon.setFitHeight(15);
+		
+		backIcon.setPreserveRatio(true);
+		forwardIcon.setPreserveRatio(true);
+		reloadIcon.setPreserveRatio(true);
+		homeIcon.setPreserveRatio(true);
+		
+		back.setGraphic(backIcon);
+		forward.setGraphic(forwardIcon);
+		reload.setGraphic(reloadIcon);
+		home.setGraphic(homeIcon);
+	}
 
 	private Tab createNewTab(String url) {
 		Tab newTab = new Tab("New Tab");
@@ -149,8 +176,8 @@ public class Browser extends Application {
 		addressBar.setText(string);
 	}
 
-	public BrowserTab getControlSelectTab() {
-		return control.getSelectTab();
+	public Controller getControl() {
+		return control;
 	}
 
 	@Override
@@ -158,14 +185,15 @@ public class Browser extends Application {
 		// TODO Auto-generated method stub
 		this.primaryStage = primaryStage;
 
+		importButtonIcons();
 		setupNavigationButtons();
-		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, launch);
+		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, load);
 
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
 
 		// Set handlers for loading URL from text field
-		launch.setOnAction(urlLoadingHandler);
+		load.setOnAction(urlLoadingHandler);
 		addressBar.setOnAction(urlLoadingHandler);
 
 		// Setup default tab on open and instantiate controller
@@ -174,6 +202,8 @@ public class Browser extends Application {
 		BrowserTab firstBrowserTab = new BrowserTab(homePage, firstTab, this);
 		tabPane.getTabs().addAll(firstTab, addTab);
 		control = new Controller(firstTab, firstBrowserTab);
+		
+		
 
 		VBox root = new VBox();
 		root.getChildren().addAll(navigationBar, tabPane);

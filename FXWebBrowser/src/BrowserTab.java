@@ -1,6 +1,8 @@
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker.State;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.control.Tab;
 import javafx.scene.web.*;
 
@@ -18,7 +20,7 @@ public class BrowserTab {
 			}
 			if (newState == State.SUCCEEDED) {
 				tab.setText(engine.getTitle());
-				if (browser.getControlSelectTab().equals(BrowserTab.this)) {
+				if (browser.getControl().getSelectTab().equals(BrowserTab.this)) {
 					browser.setAddressBar(engine.getLocation());
 					browser.setWindowTitle(engine.getTitle());
 				}
@@ -26,6 +28,14 @@ public class BrowserTab {
 			}
 		}
 	};
+	
+	EventHandler<ActionEvent> onTabCloseHandler = new EventHandler<ActionEvent>() {
+
+		@Override
+		public void handle(ActionEvent arg0) {
+			browser.getControl().onTabClose(tab, BrowserTab.this);
+			
+		}};
 
 	public BrowserTab(String url, Tab tab, Browser browser) {
 		this.tab = tab;
@@ -33,6 +43,8 @@ public class BrowserTab {
 		tab.setContent(webView);
 		engine.getLoadWorker().stateProperty().addListener(loadListener);
 		engine.load(url);
+		
+//		tab.setOnClosed();
 	}
 
 	public WebView getWebView() {
