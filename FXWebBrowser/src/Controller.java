@@ -26,7 +26,6 @@ public class Controller {
 	}
 	
 	public void onTabClose(Tab tab, BrowserTab browserTab) {
-//		closedTabHistory.add(browserTab.getHistory());
 		allTabs.remove(tab, browserTab);
 	}
 	

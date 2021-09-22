@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +26,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.web.WebHistory;
+import javafx.scene.web.WebHistory.Entry;
 import javafx.stage.Stage;
 
 public class Browser extends Application {
@@ -51,15 +53,15 @@ public class Browser extends Application {
 	private final Button home = new Button();
 	private final Button load = new Button();
 	private final Button bookmark = new Button();
-	
+
 	private final MenuButton menu = new MenuButton();
 	private final MenuItem browsingHistory = new MenuItem("Browsing History");
 	private final MenuItem viewPageSource = new MenuItem("View page source");
-	
+
 	private final Tab addTab = new Tab();
 	private Tab pageSourceTab;
 	private Tab browsingHistoryTab;
-	
+
 	private ImageView backIcon;
 	private ImageView forwardIcon;
 	private ImageView reloadIcon;
@@ -69,8 +71,17 @@ public class Browser extends Application {
 	private ImageView bookmarkIcon;
 	private ImageView menuIcon;
 	private ImageView addIcon;
+	
+	private final Comparator<WebHistory.Entry> dateOrder = new Comparator<WebHistory.Entry>() {
+
+		@Override
+		public int compare(Entry o1, Entry o2) {
+			// TODO Auto-generated method stub
+			return o2.getLastVisitedDate().compareTo(o1.getLastVisitedDate());
+		}};
 
 	// Regular expression patterns to match on valid URL with top level domain
+	// Adapted from https://regexr.com/37i6s
 	private final Pattern httpsPattern = Pattern.compile(
 			"https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?",
 			Pattern.CASE_INSENSITIVE);
@@ -121,17 +132,19 @@ public class Browser extends Application {
 			}
 		}
 	};
-	
+
 	private final EventHandler<ActionEvent> viewPageSourceHandler = new EventHandler<ActionEvent>() {
 		public void handle(ActionEvent arg0) {
+			// Adapted from https://zetcode.com/java/readwebpage/
 			HttpClient client = HttpClient.newHttpClient();
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(control.getWebEngine().getLocation())).GET().build();
+			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(control.getWebEngine().getLocation())).GET()
+					.build();
 			HttpResponse<String> response;
 			try {
 				response = client.send(request, HttpResponse.BodyHandlers.ofString());
 				TextArea htmlText = new TextArea(response.body());
 				htmlText.setWrapText(true);
-				
+
 				pageSourceTab = new Tab((String.format("%s Page Source", control.getWebEngine().getTitle())), htmlText);
 				tabPane.getTabs().add(tabPane.getTabs().size() - 1, pageSourceTab); // Add to list one position before
 				tabPane.getSelectionModel().select(pageSourceTab);
@@ -139,7 +152,41 @@ public class Browser extends Application {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}};
+		}
+	};
+
+	private final EventHandler<ActionEvent> generateHistoryPageHandler = new EventHandler<ActionEvent>() {
+
+		@Override
+		public void handle(ActionEvent arg0) {
+			VBox browsingHistoryDisplay = new VBox();
+			List<WebHistory.Entry> entries = new ArrayList<WebHistory.Entry>();
+
+			for (WebHistory history : control.getBrowsingHistory().values()) {
+				entries.addAll(history.getEntries());
+			}
+			entries.sort(dateOrder);
+			
+			// Create hyperlinks in the history page
+			for (WebHistory.Entry entry : entries) {
+				Hyperlink link = new Hyperlink(entry.getUrl());
+				link.setOnAction(new EventHandler<ActionEvent>() {
+
+					@Override
+					public void handle(ActionEvent arg0) {
+						Tab createdTab = createNewTab(entry.getUrl());
+						tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab); // Add to list one position
+																							// before
+						tabPane.getSelectionModel().select(createdTab);
+					}
+				});
+				browsingHistoryDisplay.getChildren().add(link);
+			}
+			browsingHistoryTab = new Tab("History", browsingHistoryDisplay);
+			tabPane.getTabs().add(tabPane.getTabs().size() - 1, browsingHistoryTab); // Add to list one position before
+			tabPane.getSelectionModel().select(browsingHistoryTab);
+		}
+	};
 
 	private String toURL(String string) {
 		try {
@@ -171,7 +218,7 @@ public class Browser extends Application {
 			}
 		});
 	}
-	
+
 	private void importButtonIcons() {
 		try {
 			backIcon = new ImageView(new Image(new FileInputStream("resources/icons8-back-50.png")));
@@ -195,7 +242,7 @@ public class Browser extends Application {
 		bookmarkIcon.setFitHeight(20);
 		menuIcon.setFitHeight(20);
 		addIcon.setFitHeight(20);
-		
+
 		backIcon.setPreserveRatio(true);
 		forwardIcon.setPreserveRatio(true);
 		reloadIcon.setPreserveRatio(true);
@@ -205,7 +252,7 @@ public class Browser extends Application {
 		bookmarkIcon.setPreserveRatio(true);
 		menuIcon.setPreserveRatio(true);
 		addIcon.setPreserveRatio(true);
-		
+
 		back.setGraphic(backIcon);
 		forward.setGraphic(forwardIcon);
 		reload.setGraphic(reloadIcon);
@@ -243,44 +290,16 @@ public class Browser extends Application {
 		// Set handlers for loading URL from text field
 		load.setOnAction(urlLoadingHandler);
 		addressBar.setOnAction(urlLoadingHandler);
-		
+
 		importButtonIcons();
 		setupNavigationButtons();
 		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, load, bookmark, menu);
-		
-		// NEED TO FORMAT
+
 		// Setting up side menu
-		this.browsingHistory.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent arg0) {
-				VBox browsingHistoryDisplay = new VBox();
-				List<WebHistory.Entry> entries = new ArrayList<WebHistory.Entry>(); // THIS COULD PROBABLY BE SORTED WITH A COMPARATOR
-				
-				for(WebHistory history : control.getBrowsingHistory().values()) {
-					entries.addAll(history.getEntries());
-				}
-				for(WebHistory.Entry entry : entries) {
-					Hyperlink link = new Hyperlink(entry.getUrl());
-					link.setOnAction(new EventHandler<ActionEvent>() {
-
-						@Override
-						public void handle(ActionEvent arg0) {
-							Tab createdTab = createNewTab(entry.getUrl());
-							tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab); // Add to list one position before
-							tabPane.getSelectionModel().select(createdTab);
-						}});
-					browsingHistoryDisplay.getChildren().add(link);
-				}
-				browsingHistoryTab = new Tab("History", browsingHistoryDisplay);
-				tabPane.getTabs().add(tabPane.getTabs().size() - 1, browsingHistoryTab); // Add to list one position before
-				tabPane.getSelectionModel().select(browsingHistoryTab);
-			}});
 		viewPageSource.setOnAction(viewPageSourceHandler);
-		menu.getItems().addAll(browsingHistory, viewPageSource);
-		// NEED TO FORMAT THIS
-		
-		
+		browsingHistory.setOnAction(generateHistoryPageHandler);
+		menu.getItems().addAll(viewPageSource, browsingHistory);
+
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
 
