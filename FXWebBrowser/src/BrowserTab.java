@@ -1,7 +1,7 @@
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker.State;
-import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.control.Tab;
 import javafx.scene.web.*;
@@ -29,22 +29,18 @@ public class BrowserTab {
 		}
 	};
 	
-	EventHandler<ActionEvent> onTabCloseHandler = new EventHandler<ActionEvent>() {
-
-		@Override
-		public void handle(ActionEvent arg0) {
+	private EventHandler<Event> onTabCloseHandler = new EventHandler<Event>() {
+		public void handle(Event arg0) {
 			browser.getControl().onTabClose(tab, BrowserTab.this);
-			
 		}};
 
 	public BrowserTab(String url, Tab tab, Browser browser) {
 		this.tab = tab;
 		this.browser = browser;
+		tab.setOnClosed(onTabCloseHandler);
 		tab.setContent(webView);
 		engine.getLoadWorker().stateProperty().addListener(loadListener);
-		engine.load(url);
-		
-//		tab.setOnClosed();
+		engine.load(url);	
 	}
 
 	public WebView getWebView() {

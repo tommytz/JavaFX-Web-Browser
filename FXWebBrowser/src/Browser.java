@@ -21,12 +21,10 @@ import javafx.stage.Stage;
 
 public class Browser extends Application {
 	// TO DO:
-	// Site couldn't be reached error pane
 	// history tab and bookmarks bar
+	// Site couldn't be reached error pane
 	// Settings: Change homescreen, color, zoom level
-	// Add symbols for buttons
 	// Context menu on right click
-	// Add shadow to buttons on hover
 	// new tab on CTRL+T and history on CTRL+H
 	// Print, html source
 
@@ -46,7 +44,7 @@ public class Browser extends Application {
 	private final Button load = new Button();
 	private final Button bookmark = new Button();
 	private final MenuButton menu = new MenuButton();
-	private final Tab addTab = new Tab("+");
+	private final Tab addTab = new Tab();
 	
 	private ImageView backIcon;
 	private ImageView forwardIcon;
@@ -56,6 +54,7 @@ public class Browser extends Application {
 	private ImageView addBookmarkIcon;
 	private ImageView bookmarkIcon;
 	private ImageView menuIcon;
+	private ImageView addIcon;
 
 	// Regular expression patterns to match on valid URL with top level domain
 	private final Pattern httpsPattern = Pattern.compile(
@@ -152,6 +151,7 @@ public class Browser extends Application {
 			addBookmarkIcon = new ImageView(new Image(new FileInputStream("resources/icons8-add-bookmark-50.png")));
 			bookmarkIcon = new ImageView(new Image(new FileInputStream("resources/icons8-bookmark-50.png")));
 			menuIcon = new ImageView(new Image(new FileInputStream("resources/icons8-menu-vertical-50.png")));
+			addIcon = new ImageView(new Image(new FileInputStream("resources/icons8-plus-48.png")));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -163,6 +163,7 @@ public class Browser extends Application {
 		addBookmarkIcon.setFitHeight(20);
 		bookmarkIcon.setFitHeight(20);
 		menuIcon.setFitHeight(20);
+		addIcon.setFitHeight(20);
 		
 		backIcon.setPreserveRatio(true);
 		forwardIcon.setPreserveRatio(true);
@@ -172,6 +173,7 @@ public class Browser extends Application {
 		addBookmarkIcon.setPreserveRatio(true);
 		bookmarkIcon.setPreserveRatio(true);
 		menuIcon.setPreserveRatio(true);
+		addIcon.setPreserveRatio(true);
 		
 		back.setGraphic(backIcon);
 		forward.setGraphic(forwardIcon);
@@ -180,6 +182,7 @@ public class Browser extends Application {
 		load.setGraphic(loadIcon);
 		bookmark.setGraphic(addBookmarkIcon);
 		menu.setGraphic(menuIcon);
+		addTab.setGraphic(addIcon);
 	}
 
 	private Tab createNewTab(String url) {
