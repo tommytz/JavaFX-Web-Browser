@@ -84,14 +84,13 @@ public class Browser extends Application {
 			if (control != null) {
 				// Clicking the add new tab button
 				if (newTab == addTab) {
-					tabPane.getSelectionModel().select(tabPane.getTabs().size() - 2);
 					Tab createdTab = createNewTab(homePage);
 					tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab);
 					tabPane.getSelectionModel().select(createdTab);
 					
 				// On any other tab being selected
 				} else if (newTab != addTab) {
-					System.out.println("Tab Selection changed");
+					System.out.println("Tab Selection changed to " + newTab.getText());
 					control.onTabChange(newTab);
 					// If the page has loaded then we can dynamically change the window title and
 					// address bar
