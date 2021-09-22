@@ -21,9 +21,6 @@ import javafx.stage.Stage;
 
 public class Browser extends Application {
 	// TO DO:
-	// Method to get rid of BrowserTabs when a tab is closed (to stop them
-	// persisting)
-	// Method to save history object from closed tab to use in browsing history
 	// Site couldn't be reached error pane
 	// history tab and bookmarks bar
 	// Settings: Change homescreen, color, zoom level
@@ -37,6 +34,7 @@ public class Browser extends Application {
 	private Scene scene;
 	private Controller control;
 	private final HBox navigationBar = new HBox();
+	private final HBox bookmarksBar = new HBox();
 	private final TextField addressBar = new TextField();
 	private final TabPane tabPane = new TabPane();
 	public String homePage = "http://www.google.com";
@@ -45,13 +43,19 @@ public class Browser extends Application {
 	private final Button forward = new Button();
 	private final Button reload = new Button();
 	private final Button home = new Button();
-	private final Button load = new Button("Go");
+	private final Button load = new Button();
+	private final Button bookmark = new Button();
+	private final MenuButton menu = new MenuButton();
 	private final Tab addTab = new Tab("+");
 	
 	private ImageView backIcon;
 	private ImageView forwardIcon;
 	private ImageView reloadIcon;
 	private ImageView homeIcon;
+	private ImageView loadIcon;
+	private ImageView addBookmarkIcon;
+	private ImageView bookmarkIcon;
+	private ImageView menuIcon;
 
 	// Regular expression patterns to match on valid URL with top level domain
 	private final Pattern httpsPattern = Pattern.compile(
@@ -134,6 +138,8 @@ public class Browser extends Application {
 				control.getWebEngine().load(homePage);
 			}
 		});
+		
+		menu.getItems().addAll(new MenuItem("Test1"), new MenuItem("test2"));
 	}
 	
 	private void importButtonIcons() {
@@ -142,23 +148,38 @@ public class Browser extends Application {
 			forwardIcon = new ImageView(new Image(new FileInputStream("resources/icons8-forward-50.png")));
 			reloadIcon = new ImageView(new Image(new FileInputStream("resources/icons8-restart-50.png")));
 			homeIcon = new ImageView(new Image(new FileInputStream("resources/icons8-home-50.png")));
+			loadIcon = new ImageView(new Image(new FileInputStream("resources/icons8-forward-arrow-50.png")));
+			addBookmarkIcon = new ImageView(new Image(new FileInputStream("resources/icons8-add-bookmark-50.png")));
+			bookmarkIcon = new ImageView(new Image(new FileInputStream("resources/icons8-bookmark-50.png")));
+			menuIcon = new ImageView(new Image(new FileInputStream("resources/icons8-menu-vertical-50.png")));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		backIcon.setFitHeight(15);
-		forwardIcon.setFitHeight(15);
-		reloadIcon.setFitHeight(15);
-		homeIcon.setFitHeight(15);
+		backIcon.setFitHeight(20);
+		forwardIcon.setFitHeight(20);
+		reloadIcon.setFitHeight(20);
+		homeIcon.setFitHeight(20);
+		loadIcon.setFitHeight(20);
+		addBookmarkIcon.setFitHeight(20);
+		bookmarkIcon.setFitHeight(20);
+		menuIcon.setFitHeight(20);
 		
 		backIcon.setPreserveRatio(true);
 		forwardIcon.setPreserveRatio(true);
 		reloadIcon.setPreserveRatio(true);
 		homeIcon.setPreserveRatio(true);
+		loadIcon.setPreserveRatio(true);
+		addBookmarkIcon.setPreserveRatio(true);
+		bookmarkIcon.setPreserveRatio(true);
+		menuIcon.setPreserveRatio(true);
 		
 		back.setGraphic(backIcon);
 		forward.setGraphic(forwardIcon);
 		reload.setGraphic(reloadIcon);
 		home.setGraphic(homeIcon);
+		load.setGraphic(loadIcon);
+		bookmark.setGraphic(addBookmarkIcon);
+		menu.setGraphic(menuIcon);
 	}
 
 	private Tab createNewTab(String url) {
@@ -185,16 +206,16 @@ public class Browser extends Application {
 		// TODO Auto-generated method stub
 		this.primaryStage = primaryStage;
 
-		importButtonIcons();
-		setupNavigationButtons();
-		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, load);
-
-		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
-		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
-
 		// Set handlers for loading URL from text field
 		load.setOnAction(urlLoadingHandler);
 		addressBar.setOnAction(urlLoadingHandler);
+		
+		importButtonIcons();
+		setupNavigationButtons();
+		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, load, bookmark, menu);
+
+		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
+		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
 
 		// Setup default tab on open and instantiate controller
 		addTab.setClosable(false);
@@ -202,11 +223,10 @@ public class Browser extends Application {
 		BrowserTab firstBrowserTab = new BrowserTab(homePage, firstTab, this);
 		tabPane.getTabs().addAll(firstTab, addTab);
 		control = new Controller(firstTab, firstBrowserTab);
-		
-		
 
+		// Put all UI elements into root vbox
 		VBox root = new VBox();
-		root.getChildren().addAll(navigationBar, tabPane);
+		root.getChildren().addAll(navigationBar, bookmarksBar, tabPane);
 
 		VBox.setVgrow(tabPane, Priority.ALWAYS);
 		HBox.setHgrow(addressBar, Priority.ALWAYS);
