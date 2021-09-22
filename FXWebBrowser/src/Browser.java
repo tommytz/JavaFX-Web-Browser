@@ -18,6 +18,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker.State;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.TabPane.TabDragPolicy;
@@ -197,24 +198,29 @@ public class Browser extends Application {
 	}
 
 	private void setupNavigationButtons() {
-		back.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-			public void handle(MouseEvent arg0) {
+		back.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent arg0) {
 				control.goBack();
 			}
 		});
-		forward.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-			public void handle(MouseEvent arg0) {
+		forward.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent arg0) {
 				control.goForward();
 			}
 		});
-		reload.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-			public void handle(MouseEvent arg0) {
+		reload.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent arg0) {
 				control.getWebEngine().reload();
 			}
 		});
-		home.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-			public void handle(MouseEvent arg0) {
+		home.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent arg0) {
 				control.getWebEngine().load(homePage);
+			}
+		});
+		bookmark.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent arg0) {
+				createNewBookmark(control.getWebEngine().getLocation(), control.getWebEngine().getTitle());
 			}
 		});
 	}
@@ -263,11 +269,16 @@ public class Browser extends Application {
 		addTab.setGraphic(addIcon);
 	}
 
-	private Tab createNewTab(String url) {
+	public Tab createNewTab(String url) {
 		Tab newTab = new Tab("New Tab");
 		BrowserTab newBrowserTab = new BrowserTab(url, newTab, this);
 		control.storeNewTab(newTab, newBrowserTab);
 		return newTab;
+	}
+	
+	public void createNewBookmark(String location, String title) {
+		Bookmark newBookmark = new Bookmark(location, title, Browser.this);
+		bookmarksBar.getChildren().add(newBookmark.getButton());
 	}
 
 	public void setWindowTitle(String string) {
@@ -282,10 +293,18 @@ public class Browser extends Application {
 		return control;
 	}
 
+	public TabPane getTabPane() {
+		return tabPane;
+	}
+
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		// TODO Auto-generated method stub
 		this.primaryStage = primaryStage;
+		
+		bookmarksBar.setSpacing(2);
+		bookmarksBar.setPadding(new Insets(2));
+		createNewBookmark(homePage, "Google");
 
 		// Set handlers for loading URL from text field
 		load.setOnAction(urlLoadingHandler);
@@ -294,6 +313,8 @@ public class Browser extends Application {
 		importButtonIcons();
 		setupNavigationButtons();
 		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, load, bookmark, menu);
+		navigationBar.setSpacing(2);
+		navigationBar.setPadding(new Insets(2));
 
 		// Setting up side menu
 		viewPageSource.setOnAction(viewPageSourceHandler);
