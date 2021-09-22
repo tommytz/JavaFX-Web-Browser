@@ -2,6 +2,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.web.*;
 import java.util.*;
 
+import org.w3c.dom.Document;
+
 // Mostly for dealing with whichever tab we are focusing on
 public class Controller {
 	private final Map<Tab, BrowserTab> allTabs = new HashMap<Tab, BrowserTab>();
@@ -59,6 +61,11 @@ public class Controller {
 
 	public WebEngine getWebEngine() {
 		return selectTab.getEngine();
+	}
+	
+	public String getDocument() {
+		System.out.println(selectTab.getEngine().getDocument().getTextContent());
+		return selectTab.getEngine().getDocument().getTextContent();
 	}
 
 	public Map<Tab, BrowserTab> getAllTabs() {

@@ -1,7 +1,13 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javafx.application.Application;
@@ -17,6 +23,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.web.WebHistory;
 import javafx.stage.Stage;
 
 public class Browser extends Application {
@@ -26,7 +33,7 @@ public class Browser extends Application {
 	// Settings: Change homescreen, color, zoom level
 	// Context menu on right click
 	// new tab on CTRL+T and history on CTRL+H
-	// Print, html source
+	// Print
 
 	private Stage primaryStage;
 	private Scene scene;
@@ -43,8 +50,13 @@ public class Browser extends Application {
 	private final Button home = new Button();
 	private final Button load = new Button();
 	private final Button bookmark = new Button();
+	
 	private final MenuButton menu = new MenuButton();
+	private final MenuItem browsingHistory = new MenuItem("Browsing History");
+	private final MenuItem viewPageSource = new MenuItem("View page source");
+	
 	private final Tab addTab = new Tab();
+	private Tab pageSourceTab;
 	
 	private ImageView backIcon;
 	private ImageView forwardIcon;
@@ -95,7 +107,7 @@ public class Browser extends Application {
 					tabPane.getSelectionModel().select(createdTab);
 
 					// On any other tab being selected
-				} else if (newTab != addTab) {
+				} else if (newTab != addTab && newTab != pageSourceTab) {
 					System.out.println("Tab Selection changed to " + newTab.getText());
 					control.onTabChange(newTab);
 					// If page has loaded we can dynamically change window title and address bar
@@ -107,6 +119,25 @@ public class Browser extends Application {
 			}
 		}
 	};
+	
+	private final EventHandler<ActionEvent> viewPageSourceHandler = new EventHandler<ActionEvent>() {
+		public void handle(ActionEvent arg0) {
+			HttpClient client = HttpClient.newHttpClient();
+			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(control.getWebEngine().getLocation())).GET().build();
+			HttpResponse<String> response;
+			try {
+				response = client.send(request, HttpResponse.BodyHandlers.ofString());
+				TextArea htmlText = new TextArea(response.body());
+				htmlText.setWrapText(true);;
+				
+				pageSourceTab = new Tab((String.format("%s Page Source", control.getWebEngine().getTitle())), htmlText);
+				tabPane.getTabs().add(tabPane.getTabs().size() - 1, pageSourceTab); // Add to list one position before
+				tabPane.getSelectionModel().select(pageSourceTab);
+			} catch (IOException | InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}};
 
 	private String toURL(String string) {
 		try {
@@ -137,8 +168,6 @@ public class Browser extends Application {
 				control.getWebEngine().load(homePage);
 			}
 		});
-		
-		menu.getItems().addAll(new MenuItem("Test1"), new MenuItem("test2"));
 	}
 	
 	private void importButtonIcons() {
@@ -191,6 +220,27 @@ public class Browser extends Application {
 		control.storeNewTab(newTab, newBrowserTab);
 		return newTab;
 	}
+	
+	public void getBrowsingHistory() {
+		// Get all history from closed tabs, if any
+		Set<WebHistory> tabHistory = control.getClosedTabHistory();
+		
+		// Get browsing history from all active tabs
+		for(BrowserTab browserTab : control.getAllTabs().values()) {
+			tabHistory.add(browserTab.getHistory());
+		}
+		
+		Set<WebHistory.Entry> browsingHistory = new HashSet<WebHistory.Entry>();
+		for(WebHistory history : tabHistory) {
+			for(WebHistory.Entry entry : history.getEntries()) {
+				browsingHistory.add(entry);
+			}
+		}
+		for(WebHistory.Entry entry : browsingHistory) {
+			System.out.println(entry.toString());
+		}
+		
+	}
 
 	public void setWindowTitle(String string) {
 		primaryStage.setTitle(string);
@@ -216,6 +266,10 @@ public class Browser extends Application {
 		importButtonIcons();
 		setupNavigationButtons();
 		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, load, bookmark, menu);
+		
+		// Setting up side menu
+		viewPageSource.setOnAction(viewPageSourceHandler);
+		menu.getItems().addAll(browsingHistory, viewPageSource);
 
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
