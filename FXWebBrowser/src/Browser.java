@@ -7,7 +7,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javafx.application.Application;
@@ -57,6 +58,7 @@ public class Browser extends Application {
 	
 	private final Tab addTab = new Tab();
 	private Tab pageSourceTab;
+	private Tab browsingHistoryTab;
 	
 	private ImageView backIcon;
 	private ImageView forwardIcon;
@@ -107,7 +109,7 @@ public class Browser extends Application {
 					tabPane.getSelectionModel().select(createdTab);
 
 					// On any other tab being selected
-				} else if (newTab != addTab && newTab != pageSourceTab) {
+				} else if (newTab != addTab && newTab != pageSourceTab && newTab != browsingHistoryTab) {
 					System.out.println("Tab Selection changed to " + newTab.getText());
 					control.onTabChange(newTab);
 					// If page has loaded we can dynamically change window title and address bar
@@ -128,7 +130,7 @@ public class Browser extends Application {
 			try {
 				response = client.send(request, HttpResponse.BodyHandlers.ofString());
 				TextArea htmlText = new TextArea(response.body());
-				htmlText.setWrapText(true);;
+				htmlText.setWrapText(true);
 				
 				pageSourceTab = new Tab((String.format("%s Page Source", control.getWebEngine().getTitle())), htmlText);
 				tabPane.getTabs().add(tabPane.getTabs().size() - 1, pageSourceTab); // Add to list one position before
@@ -220,27 +222,6 @@ public class Browser extends Application {
 		control.storeNewTab(newTab, newBrowserTab);
 		return newTab;
 	}
-	
-	public void getBrowsingHistory() {
-		// Get all history from closed tabs, if any
-		Set<WebHistory> tabHistory = control.getClosedTabHistory();
-		
-		// Get browsing history from all active tabs
-		for(BrowserTab browserTab : control.getAllTabs().values()) {
-			tabHistory.add(browserTab.getHistory());
-		}
-		
-		Set<WebHistory.Entry> browsingHistory = new HashSet<WebHistory.Entry>();
-		for(WebHistory history : tabHistory) {
-			for(WebHistory.Entry entry : history.getEntries()) {
-				browsingHistory.add(entry);
-			}
-		}
-		for(WebHistory.Entry entry : browsingHistory) {
-			System.out.println(entry.toString());
-		}
-		
-	}
 
 	public void setWindowTitle(String string) {
 		primaryStage.setTitle(string);
@@ -267,10 +248,39 @@ public class Browser extends Application {
 		setupNavigationButtons();
 		navigationBar.getChildren().addAll(back, forward, reload, home, addressBar, load, bookmark, menu);
 		
+		// NEED TO FORMAT
 		// Setting up side menu
+		this.browsingHistory.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				VBox browsingHistoryDisplay = new VBox();
+				List<WebHistory.Entry> entries = new ArrayList<WebHistory.Entry>(); // THIS COULD PROBABLY BE SORTED WITH A COMPARATOR
+				
+				for(WebHistory history : control.getBrowsingHistory().values()) {
+					entries.addAll(history.getEntries());
+				}
+				for(WebHistory.Entry entry : entries) {
+					Hyperlink link = new Hyperlink(entry.getUrl());
+					link.setOnAction(new EventHandler<ActionEvent>() {
+
+						@Override
+						public void handle(ActionEvent arg0) {
+							Tab createdTab = createNewTab(entry.getUrl());
+							tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab); // Add to list one position before
+							tabPane.getSelectionModel().select(createdTab);
+						}});
+					browsingHistoryDisplay.getChildren().add(link);
+				}
+				browsingHistoryTab = new Tab("History", browsingHistoryDisplay);
+				tabPane.getTabs().add(tabPane.getTabs().size() - 1, browsingHistoryTab); // Add to list one position before
+				tabPane.getSelectionModel().select(browsingHistoryTab);
+			}});
 		viewPageSource.setOnAction(viewPageSourceHandler);
 		menu.getItems().addAll(browsingHistory, viewPageSource);
-
+		// NEED TO FORMAT THIS
+		
+		
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
 

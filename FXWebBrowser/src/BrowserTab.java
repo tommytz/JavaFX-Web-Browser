@@ -24,6 +24,9 @@ public class BrowserTab {
 					browser.setAddressBar(engine.getLocation());
 					browser.setWindowTitle(engine.getTitle());
 				}
+				// Update browsing history for this tab when a new page is loaded
+				browser.getControl().getBrowsingHistory().remove(BrowserTab.this);
+				browser.getControl().getBrowsingHistory().put(BrowserTab.this, getHistory());
 				System.out.println("Succesfully loaded " + engine.getLocation());
 			}
 		}
