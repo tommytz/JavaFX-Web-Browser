@@ -26,13 +26,14 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.scene.web.WebHistory;
 import javafx.scene.web.WebHistory.Entry;
 import javafx.stage.Stage;
 
 public class Browser extends Application {
 	// TO DO:
-	// history tab and bookmarks bar
 	// Site couldn't be reached error pane
 	// Settings: Change homescreen, color, zoom level
 	// Context menu on right click
@@ -160,7 +161,15 @@ public class Browser extends Application {
 
 		@Override
 		public void handle(ActionEvent arg0) {
+			BorderPane historyPage = new BorderPane();
+			Text historyTitle = new Text("Browsing History");
+			historyTitle.setFont(new Font("Arial Bold", 24));
 			VBox browsingHistoryDisplay = new VBox();
+			browsingHistoryDisplay.setPadding(new Insets(10));
+			historyPage.setTop(historyTitle);
+			historyPage.setCenter(browsingHistoryDisplay);
+			historyPage.setPadding(new Insets(10));
+			
 			List<WebHistory.Entry> entries = new ArrayList<WebHistory.Entry>();
 
 			for (WebHistory history : control.getBrowsingHistory().values()) {
@@ -183,7 +192,7 @@ public class Browser extends Application {
 				});
 				browsingHistoryDisplay.getChildren().add(link);
 			}
-			browsingHistoryTab = new Tab("History", browsingHistoryDisplay);
+			browsingHistoryTab = new Tab("History", historyPage);
 			tabPane.getTabs().add(tabPane.getTabs().size() - 1, browsingHistoryTab); // Add to list one position before
 			tabPane.getSelectionModel().select(browsingHistoryTab);
 		}
@@ -227,15 +236,15 @@ public class Browser extends Application {
 
 	private void importButtonIcons() {
 		try {
-			backIcon = new ImageView(new Image(new FileInputStream("resources/icons8-back-50.png")));
-			forwardIcon = new ImageView(new Image(new FileInputStream("resources/icons8-forward-50.png")));
-			reloadIcon = new ImageView(new Image(new FileInputStream("resources/icons8-restart-50.png")));
-			homeIcon = new ImageView(new Image(new FileInputStream("resources/icons8-home-50.png")));
-			loadIcon = new ImageView(new Image(new FileInputStream("resources/icons8-forward-arrow-50.png")));
-			addBookmarkIcon = new ImageView(new Image(new FileInputStream("resources/icons8-add-bookmark-50.png")));
-			bookmarkIcon = new ImageView(new Image(new FileInputStream("resources/icons8-bookmark-50.png")));
-			menuIcon = new ImageView(new Image(new FileInputStream("resources/icons8-menu-vertical-50.png")));
-			addIcon = new ImageView(new Image(new FileInputStream("resources/icons8-plus-48.png")));
+			backIcon = new ImageView(new Image(new FileInputStream("img/icons8-back-50.png")));
+			forwardIcon = new ImageView(new Image(new FileInputStream("img/icons8-forward-50.png")));
+			reloadIcon = new ImageView(new Image(new FileInputStream("img/icons8-restart-50.png")));
+			homeIcon = new ImageView(new Image(new FileInputStream("img/icons8-home-50.png")));
+			loadIcon = new ImageView(new Image(new FileInputStream("img/icons8-forward-arrow-50.png")));
+			addBookmarkIcon = new ImageView(new Image(new FileInputStream("img/icons8-add-bookmark-50.png")));
+			bookmarkIcon = new ImageView(new Image(new FileInputStream("img/icons8-bookmark-50.png")));
+			menuIcon = new ImageView(new Image(new FileInputStream("img/icons8-menu-vertical-50.png")));
+			addIcon = new ImageView(new Image(new FileInputStream("img/icons8-plus-48.png")));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
