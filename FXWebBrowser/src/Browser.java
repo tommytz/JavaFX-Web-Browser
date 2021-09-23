@@ -24,7 +24,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.TabPane.TabDragPolicy;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -149,7 +148,6 @@ public class Browser extends Application {
 				tabPane.getTabs().add(tabPane.getTabs().size() - 1, pageSourceTab); // Add to list one position before
 				tabPane.getSelectionModel().select(pageSourceTab);
 			} catch (IOException | InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -173,7 +171,7 @@ public class Browser extends Application {
 			for (WebHistory history : control.getBrowsingHistory().values()) {
 				entries.addAll(history.getEntries());
 			}
-			entries.sort(dateOrder);
+			entries.sort(dateOrder); // Had problems with sorting due to sometimes entries having null dates
 			
 			// Create hyperlinks in the history page
 			for (WebHistory.Entry entry : entries) {
