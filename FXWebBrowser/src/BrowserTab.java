@@ -13,6 +13,7 @@ public class BrowserTab {
 	private Browser browser;
 	private final WebView webView = new WebView();
 	private final WebEngine engine = webView.getEngine();
+	// From https://colorlib.com/wp/template/colorlib-error-404-3/
 	private URL html404 = this.getClass().getResource("resources/index.html");
 
 	private ChangeListener<State> loadListener = new ChangeListener<State>() {
@@ -20,11 +21,7 @@ public class BrowserTab {
 			if (newState == State.FAILED) {
 				// TO DO: Make some kind of page for failing to load message
 				System.out.println("Failed to load website.");
-				if (html404 != null) {
-					engine.load(html404.toExternalForm());
-				} else {
-					System.out.println(getClass());
-				}
+				engine.load(html404.toExternalForm());
 			}
 			if (newState == State.SUCCEEDED) {
 				tab.setText(engine.getTitle());

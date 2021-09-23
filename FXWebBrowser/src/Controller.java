@@ -57,6 +57,10 @@ public class Controller {
 	public BrowserTab getSelectTab() {
 		return selectTab;
 	}
+	
+	public WebView getWebView() {
+		return selectTab.getWebView();
+	}
 
 	public WebEngine getWebEngine() {
 		return selectTab.getEngine();

@@ -34,10 +34,7 @@ import javafx.stage.Stage;
 
 public class Browser extends Application {
 	// TO DO:
-	// Site couldn't be reached error pane
-	// Settings: Change homescreen, color, zoom level
-	// Context menu on right click
-	// new tab on CTRL+T and history on CTRL+H
+	// Settings: color, zoom level
 	// Print
 
 	private Stage primaryStage;
@@ -59,6 +56,7 @@ public class Browser extends Application {
 	private final MenuButton menu = new MenuButton();
 	private final MenuItem browsingHistory = new MenuItem("Browsing History");
 	private final MenuItem viewPageSource = new MenuItem("View page source");
+	private final MenuItem setHomeScreen = new MenuItem("Set home screen");
 
 	private final Tab addTab = new Tab();
 	private Tab pageSourceTab;
@@ -328,7 +326,14 @@ public class Browser extends Application {
 		// Setting up side menu
 		viewPageSource.setOnAction(viewPageSourceHandler);
 		browsingHistory.setOnAction(generateHistoryPageHandler);
-		menu.getItems().addAll(viewPageSource, browsingHistory);
+		setHomeScreen.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				homePage = control.getWebEngine().getLocation();
+				
+			}});
+		menu.getItems().addAll(viewPageSource, browsingHistory, setHomeScreen);
 
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
