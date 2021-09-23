@@ -292,15 +292,15 @@ public class Browser extends Application {
 
 	private void importButtonIcons() {
 		try {
-			backIcon = new ImageView(new Image(new FileInputStream("img/icons8-back-50.png")));
-			forwardIcon = new ImageView(new Image(new FileInputStream("img/icons8-forward-50.png")));
-			reloadIcon = new ImageView(new Image(new FileInputStream("img/icons8-restart-50.png")));
-			homeIcon = new ImageView(new Image(new FileInputStream("img/icons8-home-50.png")));
-			loadIcon = new ImageView(new Image(new FileInputStream("img/icons8-forward-arrow-50.png")));
-			addBookmarkIcon = new ImageView(new Image(new FileInputStream("img/icons8-add-bookmark-50.png")));
-			bookmarkIcon = new ImageView(new Image(new FileInputStream("img/icons8-bookmark-50.png")));
-			menuIcon = new ImageView(new Image(new FileInputStream("img/icons8-menu-vertical-50.png")));
-			addIcon = new ImageView(new Image(new FileInputStream("img/icons8-plus-48.png")));
+			backIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-back-50.png")));
+			forwardIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-forward-50.png")));
+			reloadIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-restart-50.png")));
+			homeIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-home-50.png")));
+			loadIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-forward-arrow-50.png")));
+			addBookmarkIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-add-bookmark-50.png")));
+			bookmarkIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-bookmark-50.png")));
+			menuIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-menu-vertical-50.png")));
+			addIcon = new ImageView(new Image(new FileInputStream("src/resources/icons8-plus-48.png")));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
