@@ -37,11 +37,10 @@ public class Browser extends Application {
 	private Scene scene;
 	private Controller control;
 	private final HBox navigationBar = new HBox();
-	private final HBox bookmarksBar = new HBox();
 	private final TextField addressBar = new TextField();
 	private final TabPane tabPane = new TabPane();
+	private final List<Bookmark> bookmarks = new ArrayList<Bookmark>();
 	public String homePage = "http://www.google.com";
-	private List<Bookmark> bookmarks = new ArrayList<Bookmark>();
 
 	private final Button back = new Button();
 	private final Button forward = new Button();
@@ -51,16 +50,18 @@ public class Browser extends Application {
 	private final Button bookmark = new Button();
 
 	private final MenuButton menu = new MenuButton();
+	private final MenuItem viewBookmarks = new MenuItem("Bookmarks");
 	private final MenuItem browsingHistory = new MenuItem("Browsing History");
 	private final MenuItem viewPageSource = new MenuItem("View page source");
 	private final MenuItem setHomeScreen = new MenuItem("Set home screen");
 	private final MenuItem zoomIn = new MenuItem("Zoom in");
 	private final MenuItem zoomOut = new MenuItem("Zoom out");
-	private final MenuItem defaultZoom = new MenuItem("Default zoom");
+	private final MenuItem defaultZoom = new MenuItem("Reset zoom");
 
 	private final Tab addTab = new Tab();
 	private Tab pageSourceTab;
 	private Tab browsingHistoryTab;
+	private Tab bookmarksTab;
 
 	private ImageView backIcon;
 	private ImageView forwardIcon;
@@ -120,7 +121,7 @@ public class Browser extends Application {
 					tabPane.getSelectionModel().select(createdTab);
 
 					// On any other tab being selected
-				} else if (newTab != addTab && newTab != pageSourceTab && newTab != browsingHistoryTab) {
+				} else if (newTab != addTab && newTab != pageSourceTab && newTab != browsingHistoryTab && newTab != bookmarksTab) {
 					System.out.println("Tab Selection changed to " + newTab.getText());
 					control.onTabChange(newTab);
 					// If page has loaded we can dynamically change window title and address bar
@@ -182,19 +183,42 @@ public class Browser extends Application {
 					@Override
 					public void handle(ActionEvent arg0) {
 						Tab createdTab = createNewTab(entry.getUrl());
-						tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab); // Add to list one position
-																							// before
+						tabPane.getTabs().add(tabPane.getTabs().size() - 1, createdTab);
 						tabPane.getSelectionModel().select(createdTab);
 					}
 				});
 				browsingHistoryDisplay.getChildren().add(link);
 			}
-			browsingHistoryTab = new Tab("History", historyPage);
+			browsingHistoryTab = new Tab("History", new ScrollPane(historyPage));
 			tabPane.getTabs().add(tabPane.getTabs().size() - 1, browsingHistoryTab); // Add to list one position before
 			tabPane.getSelectionModel().select(browsingHistoryTab);
 		}
 	};
 
+	private final EventHandler<ActionEvent> viewBookmarksHandler = new EventHandler<ActionEvent>() {
+
+		@Override
+		public void handle(ActionEvent arg0) {
+			BorderPane bookmarksDisplay = new BorderPane();
+			GridPane bookmarksColumns = new GridPane();
+			Text bookmarksDisplayTitle = new Text("Bookmarks");
+			bookmarksDisplayTitle.setFont(new Font("Arial Bold", 24));
+			bookmarksDisplay.setTop(bookmarksDisplayTitle);
+			bookmarksDisplay.setCenter(bookmarksColumns);
+			bookmarksDisplay.setPadding(new Insets(10));
+			
+			int rowNum = 0;
+			for(Bookmark bookmark : bookmarks) {
+				bookmarksColumns.addRow(rowNum, new Text(bookmark.getTitle()), bookmark.getLink());
+				rowNum += 1;
+			}
+			
+			bookmarksTab = new Tab("Bookmarks", new ScrollPane(bookmarksDisplay));
+			tabPane.getTabs().add(tabPane.getTabs().size() - 1, bookmarksTab); // Add to list one position before
+			tabPane.getSelectionModel().select(bookmarksTab);
+		}
+	};
+	
 	private String toURL(String string) {
 		try {
 			return new URL(string).toExternalForm();
@@ -234,6 +258,8 @@ public class Browser extends Application {
 	private void setupMenuItems() {
 		viewPageSource.setOnAction(viewPageSourceHandler);
 		browsingHistory.setOnAction(generateHistoryPageHandler);
+		viewBookmarks.setOnAction(viewBookmarksHandler);
+		
 		setHomeScreen.setOnAction(new EventHandler<ActionEvent>() {
 
 			@Override
@@ -317,7 +343,8 @@ public class Browser extends Application {
 	
 	public void createNewBookmark(String location, String title) {
 		Bookmark newBookmark = new Bookmark(location, title, Browser.this);
-		bookmarksBar.getChildren().add(newBookmark.getButton());
+		bookmarks.add(newBookmark);
+		System.out.println("New bookmark created");
 	}
 
 	public void setWindowTitle(String string) {
@@ -340,9 +367,6 @@ public class Browser extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		// TODO Auto-generated method stub
 		this.primaryStage = primaryStage;
-		
-		bookmarksBar.setSpacing(2);
-		bookmarksBar.setPadding(new Insets(2));
 		createNewBookmark(homePage, "Google");
 
 		// Set handlers for loading URL from text field
@@ -357,7 +381,7 @@ public class Browser extends Application {
 
 		// Setting up side menu
 		setupMenuItems();
-		menu.getItems().addAll(viewPageSource, browsingHistory, setHomeScreen, zoomIn, zoomOut, defaultZoom);
+		menu.getItems().addAll(viewBookmarks, browsingHistory, setHomeScreen, zoomIn, zoomOut, defaultZoom, viewPageSource);
 
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
@@ -371,7 +395,7 @@ public class Browser extends Application {
 
 		// Put all UI elements into root vbox
 		VBox root = new VBox();
-		root.getChildren().addAll(navigationBar, bookmarksBar, tabPane);
+		root.getChildren().addAll(navigationBar, tabPane);
 
 		VBox.setVgrow(tabPane, Priority.ALWAYS);
 		HBox.setHgrow(addressBar, Priority.ALWAYS);
