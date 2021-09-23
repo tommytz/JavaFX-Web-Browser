@@ -33,9 +33,6 @@ import javafx.scene.web.WebHistory.Entry;
 import javafx.stage.Stage;
 
 public class Browser extends Application {
-	// TO DO:
-	// Settings: color, zoom level
-	// Print
 
 	private Stage primaryStage;
 	private Scene scene;
@@ -57,6 +54,9 @@ public class Browser extends Application {
 	private final MenuItem browsingHistory = new MenuItem("Browsing History");
 	private final MenuItem viewPageSource = new MenuItem("View page source");
 	private final MenuItem setHomeScreen = new MenuItem("Set home screen");
+	private final MenuItem zoomIn = new MenuItem("Zoom in");
+	private final MenuItem zoomOut = new MenuItem("Zoom out");
+	private final MenuItem defaultZoom = new MenuItem("Default zoom");
 
 	private final Tab addTab = new Tab();
 	private Tab pageSourceTab;
@@ -231,6 +231,39 @@ public class Browser extends Application {
 			}
 		});
 	}
+	
+	private void setupMenuItems() {
+		viewPageSource.setOnAction(viewPageSourceHandler);
+		browsingHistory.setOnAction(generateHistoryPageHandler);
+		setHomeScreen.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				homePage = control.getWebEngine().getLocation();
+				
+			}});
+		zoomIn.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				control.getWebView().setZoom(1.25);
+				
+			}});
+		zoomOut.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				control.getWebView().setZoom(0.75);
+				
+			}});
+		defaultZoom.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				control.getWebView().setZoom(1.0);
+				
+			}});
+	}
 
 	private void importButtonIcons() {
 		try {
@@ -324,16 +357,8 @@ public class Browser extends Application {
 		navigationBar.setPadding(new Insets(2));
 
 		// Setting up side menu
-		viewPageSource.setOnAction(viewPageSourceHandler);
-		browsingHistory.setOnAction(generateHistoryPageHandler);
-		setHomeScreen.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent arg0) {
-				homePage = control.getWebEngine().getLocation();
-				
-			}});
-		menu.getItems().addAll(viewPageSource, browsingHistory, setHomeScreen);
+		setupMenuItems();
+		menu.getItems().addAll(viewPageSource, browsingHistory, setHomeScreen, zoomIn, zoomOut, defaultZoom);
 
 		tabPane.setTabDragPolicy(TabDragPolicy.REORDER);
 		tabPane.getSelectionModel().selectedItemProperty().addListener(tabChangeListener);
