@@ -2,8 +2,6 @@ import javafx.scene.control.Tab;
 import javafx.scene.web.*;
 import java.util.*;
 
-import org.w3c.dom.Document;
-
 // Mostly for dealing with whichever tab we are focusing on
 public class Controller {
 	private final Map<Tab, BrowserTab> allTabs = new HashMap<Tab, BrowserTab>();

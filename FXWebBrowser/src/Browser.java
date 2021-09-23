@@ -41,6 +41,7 @@ public class Browser extends Application {
 	private final TextField addressBar = new TextField();
 	private final TabPane tabPane = new TabPane();
 	public String homePage = "http://www.google.com";
+	private List<Bookmark> bookmarks = new ArrayList<Bookmark>();
 
 	private final Button back = new Button();
 	private final Button forward = new Button();
@@ -386,7 +387,6 @@ public class Browser extends Application {
 	}
 
 	public Browser() {
-		// TODO Auto-generated constructor stub
 	}
 
 }
